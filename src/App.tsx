@@ -7,16 +7,42 @@ import {
   useMsal,
   useMsalAuthentication
 } from '@azure/msal-react';
-import { InteractionType } from '@azure/msal-browser';
+import { AccountInfo, EventType, InteractionType } from '@azure/msal-browser';
 import { References } from './References';
 import { loginRequest } from './msalConfig';
+import { useEffect, useState } from 'react';
 
 function App() {
+  const [idToken, setIdToken] = useState('');
+  const [accessToken, setAccessToken] = useState('');
   const { accounts, instance } = useMsal();
   const { login, error } = useMsalAuthentication(
     InteractionType.Silent,
     loginRequest
   );
+
+  instance.addEventCallback((event) => {
+    if (event.eventType === EventType.LOGIN_SUCCESS && event.payload) {
+      const authenticationResult = event.payload as { account: AccountInfo };
+      const account = authenticationResult.account;
+      instance.setActiveAccount(account);
+    }
+  });
+
+  useEffect(() => {
+    if (accounts[0]) {
+      instance
+        .acquireTokenSilent({
+          scopes: loginRequest.scopes,
+          account: instance.getActiveAccount() as AccountInfo | undefined
+        })
+        .then((result) => {
+          console.log('##### acquire token result: ', result);
+          setIdToken(JSON.stringify(result.idToken));
+          setAccessToken(JSON.stringify(result.accessToken));
+        });
+    }
+  }, [accounts, instance]);
 
   const handleLogin = () => {
     login(InteractionType.Redirect, loginRequest);
@@ -44,6 +70,9 @@ function App() {
             <>
               <p>Signed in as: {accounts[0]?.username}</p>
               <p>Account ID: {accounts[0]?.localAccountId}</p>
+              <p>ID Token: {idToken}</p>
+              <p>Access Token: {accessToken}</p>
+
               <p>Token Claims: </p>
               <pre
                 id="json"
