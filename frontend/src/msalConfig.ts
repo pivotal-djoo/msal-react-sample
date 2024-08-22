@@ -1,7 +1,9 @@
 import { LogLevel } from '@azure/msal-browser';
 
-const CLIENT_ID = 'replace-with-Client-ID-from-Entra-ID';
-const TENANT_ID = 'replace-with-Azure-Tenant-ID';
+const CLIENT_ID = import.meta.env.VITE_CLIENT_ID;
+const TENANT_ID = import.meta.env.VITE_TENANT_ID;
+const REDIRECT_URI = import.meta.env.VITE_REDIRECT_URI;
+const SCOPES = [import.meta.env.VITE_SCOPE];
 
 /**
  * Configuration object to be passed to MSAL instance on creation.
@@ -15,12 +17,12 @@ export const msalConfig = {
     authority: `https://login.microsoftonline.com/${TENANT_ID}`, //  Replace the placeholder with your tenant info
     // EXTERNAL TENANT
     // authority: "https://Enter_the_Tenant_Subdomain_Here.ciamlogin.com/", // Replace the placeholder with your tenant subdomain
-    redirectUri: '/', // You must register this URI on App Registration. Defaults to window.location.href e.g. http://localhost:3000/
+    redirectUri: REDIRECT_URI, // You must register this URI on App Registration. Defaults to window.location.href e.g. http://localhost:3000/
     navigateToLoginRequestUrl: true // If "true", will navigate back to the original request location before processing the auth code response.
   },
   cache: {
-    cacheLocation: 'sessionStorage', // Configures cache location. "sessionStorage" is more secure, but "localStorage" gives you SSO.
-    storeAuthStateInCookie: false // set this to true if you have to support IE
+    cacheLocation: 'localStorage', // Configures cache location. "sessionStorage" is more secure, but "localStorage" gives you SSO.
+    storeAuthStateInCookie: true // set this to true if you have to support IE
   },
   system: {
     loggerOptions: {
@@ -58,7 +60,7 @@ export const msalConfig = {
  * https://learn.microsoft.com/en-us/entra/identity-platform/permissions-consent-overview#openid-connect-scopes
  */
 export const loginRequest = {
-  scopes: ['User.Read']
+  scopes: SCOPES
 };
 
 /**

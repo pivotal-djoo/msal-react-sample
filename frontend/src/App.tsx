@@ -10,16 +10,27 @@ import {
 import { AccountInfo, EventType, InteractionType } from '@azure/msal-browser';
 import { References } from './References';
 import { loginRequest } from './msalConfig';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+
+const API_URI = import.meta.env.VITE_API_URI;
 
 function App() {
   const [idToken, setIdToken] = useState('');
   const [accessToken, setAccessToken] = useState('');
+  const [userContent, setUserContent] = useState('');
+  const [userRoles, setUserRoles] = useState([]);
   const { accounts, instance } = useMsal();
   const { login, error } = useMsalAuthentication(
     InteractionType.Silent,
     loginRequest
   );
+
+  const getTokens = () => {
+    return instance.acquireTokenSilent({
+      scopes: loginRequest.scopes,
+      account: instance.getActiveAccount() as AccountInfo | undefined
+    });
+  };
 
   instance.addEventCallback((event) => {
     if (event.eventType === EventType.LOGIN_SUCCESS && event.payload) {
@@ -27,24 +38,16 @@ function App() {
       const account = authenticationResult.account;
       instance.setActiveAccount(account);
     }
+    if (event.eventType === EventType.ACQUIRE_TOKEN_SUCCESS) {
+      getTokens().then((result) => {
+        setIdToken(result.idToken);
+        setAccessToken(result.accessToken);
+      });
+    }
   });
 
-  useEffect(() => {
-    if (accounts[0]) {
-      instance
-        .acquireTokenSilent({
-          scopes: loginRequest.scopes,
-          account: instance.getActiveAccount() as AccountInfo | undefined
-        })
-        .then((result) => {
-          console.log('##### acquire token result: ', result);
-          setIdToken(JSON.stringify(result.idToken));
-          setAccessToken(JSON.stringify(result.accessToken));
-        });
-    }
-  }, [accounts, instance]);
-
   const handleLogin = () => {
+    setUserContent('');
     login(InteractionType.Redirect, loginRequest);
   };
 
@@ -53,6 +56,28 @@ function App() {
       account: instance.getAccountByHomeId(accounts[0]?.homeAccountId)
     };
     instance.logoutRedirect(logoutRequest);
+  };
+
+  const getUserContent = async () => {
+    const accessToken = (await getTokens()).accessToken;
+    const response = await fetch(`${API_URI}/user-only-content`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      }
+    }).then((res) => res.json());
+    setUserContent(response.message);
+  };
+
+  const getUserRoles = async () => {
+    const accessToken = (await getTokens()).accessToken;
+    const response = await fetch(`${API_URI}/roles`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      }
+    }).then((res) => res.json());
+    setUserRoles(response.roles);
   };
 
   return (
@@ -70,6 +95,17 @@ function App() {
             <>
               <p>Signed in as: {accounts[0]?.username}</p>
               <p>Account ID: {accounts[0]?.localAccountId}</p>
+              <p>
+                <button onClick={getUserContent}>Get user content</button>
+                {userContent && <pre id="json">{userContent}</pre>}
+              </p>
+              <p>
+                <button onClick={getUserRoles}>Get user roles</button>
+                {userRoles.length > 0 && (
+                  <pre id="json">{userRoles.join(', ')}</pre>
+                )}
+              </p>
+              <button onClick={handleLogout}>Logout</button>
               <p>ID Token: {idToken}</p>
               <p>Access Token: {accessToken}</p>
 
@@ -80,8 +116,6 @@ function App() {
               >
                 {JSON.stringify(accounts[0]?.idTokenClaims, null, 4)}
               </pre>
-
-              <button onClick={handleLogout}>Logout</button>
             </>
           )}
         </div>

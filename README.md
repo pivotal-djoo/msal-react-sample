@@ -4,20 +4,44 @@ This sample provides a minimal setup to get Authentication working using [MSAL.j
 
 ## Getting Started
 
-1. Replace the `CLIENT_ID` and `TENANT_ID` values in [msalConfig.ts](./src/msalConfig.ts)
-
-```js
-const CLIENT_ID = 'replace-with-Client-ID-from-Entra-ID';
-const TENANT_ID = 'replace-with-Azure-Tenant-ID';
-```
-
-2. Install dependencies
+1. Create a `.env` file in `frontend` folder with the following content.
 
 ```bash
+VITE_CLIENT_ID="replace-with-Client-ID-from-Entra-ID"
+VITE_TENANT_ID="replace-with-Azure-Tenant-ID"
+VITE_REDIRECT_URI="http://localhost:5173"
+VITE_SCOPE="replace-with-scope-to-access-the-app"
+VITE_API_URI="http://localhost:3000"
+```
+
+2. Create a `.env` file in `backend` folder with the following content.
+
+```bash
+CLIENT_ID="replace-with-Client-ID-from-Entra-ID"
+TENANT_ID="replace-with-Azure-Tenant-ID"
+```
+
+3. Install frontend dependencies
+
+```bash
+cd frontend
 pnpm install
 ```
 
-3. Run the sample app locally
+4. Run the frontend app locally
+
+```bash
+pnpm run dev
+```
+
+5. Install backend dependencies
+
+```bash
+cd backend
+pnpm install
+```
+
+6. Run the backend app locally
 
 ```bash
 pnpm run dev
