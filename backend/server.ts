@@ -5,6 +5,10 @@ import { expressjwt, Request as JWTRequest } from 'express-jwt';
 import 'dotenv/config';
 import { expressJwtConfig } from './auth';
 
+if (process.env.NODE_ENV === 'e2e') {
+  process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
+}
+
 const app = express();
 const port = 3000;
 
@@ -30,8 +34,10 @@ app.get(
       return;
     }
 
+    const username = req.auth.preferred_username || req.auth.email;
+
     res.send({
-      message: `Backend app validated auth token for user ${req.auth.unique_name}.`
+      message: `Backend app validated auth token for user ${username}.`
     });
   }
 );

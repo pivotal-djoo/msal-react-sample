@@ -1,9 +1,16 @@
-import { LogLevel } from '@azure/msal-browser';
+import { LogLevel, ProtocolMode } from '@azure/msal-browser';
 
-const CLIENT_ID = import.meta.env.VITE_CLIENT_ID;
-const TENANT_ID = import.meta.env.VITE_TENANT_ID;
+const CLIENT_ID =
+  import.meta.env.MODE === 'e2e'
+    ? import.meta.env.VITE_E2E_CLIENT_ID
+    : import.meta.env.VITE_CLIENT_ID;
+const SCOPES =
+  import.meta.env.MODE === 'e2e' ? ['openid'] : [import.meta.env.VITE_SCOPE];
+const AUTHORITY =
+  import.meta.env.MODE === 'e2e'
+    ? import.meta.env.VITE_E2E_AUTHORITY
+    : `https://login.microsoftonline.com/${import.meta.env.VITE_TENANT_ID}`;
 const REDIRECT_URI = import.meta.env.VITE_REDIRECT_URI;
-const SCOPES = [import.meta.env.VITE_SCOPE];
 
 /**
  * Configuration object to be passed to MSAL instance on creation.
@@ -12,17 +19,19 @@ const SCOPES = [import.meta.env.VITE_SCOPE];
  */
 export const msalConfig = {
   auth: {
+    protocolMode: ProtocolMode.OIDC,
     clientId: CLIENT_ID, // This is the ONLY mandatory field that you need to supply
     // WORKFORCE TENANT
-    authority: `https://login.microsoftonline.com/${TENANT_ID}`, //  Replace the placeholder with your tenant info
+    authority: AUTHORITY, //  Replace the placeholder with your tenant info
     // EXTERNAL TENANT
     // authority: "https://Enter_the_Tenant_Subdomain_Here.ciamlogin.com/", // Replace the placeholder with your tenant subdomain
     redirectUri: REDIRECT_URI, // You must register this URI on App Registration. Defaults to window.location.href e.g. http://localhost:3000/
-    navigateToLoginRequestUrl: true // If "true", will navigate back to the original request location before processing the auth code response.
+    navigateToLoginRequestUrl: true, // If "true", will navigate back to the original request location before processing the auth code response.
+    knownAuthorities: [AUTHORITY]
   },
   cache: {
-    cacheLocation: 'localStorage', // Configures cache location. "sessionStorage" is more secure, but "localStorage" gives you SSO.
-    storeAuthStateInCookie: true // set this to true if you have to support IE
+    cacheLocation: 'sessionStorage', // Configures cache location. "sessionStorage" is more secure, but "localStorage" gives you SSO.
+    storeAuthStateInCookie: false // set this to true if you have to support IE
   },
   system: {
     loggerOptions: {
@@ -59,6 +68,10 @@ export const msalConfig = {
  * For more information about OIDC scopes, visit:
  * https://learn.microsoft.com/en-us/entra/identity-platform/permissions-consent-overview#openid-connect-scopes
  */
+// export const loginRequest = {
+//   scopes: SCOPES
+// };
+
 export const loginRequest = {
   scopes: SCOPES
 };

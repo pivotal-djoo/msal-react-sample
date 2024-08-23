@@ -10,7 +10,7 @@ import {
 import { AccountInfo, EventType, InteractionType } from '@azure/msal-browser';
 import { References } from './References';
 import { loginRequest } from './msalConfig';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const API_URI = import.meta.env.VITE_API_URI;
 
@@ -19,7 +19,8 @@ function App() {
   const [accessToken, setAccessToken] = useState('');
   const [userContent, setUserContent] = useState('');
   const [userRoles, setUserRoles] = useState([]);
-  const { accounts, instance } = useMsal();
+  const [eventCallbackId, setEventCallbackId] = useState<string | null>(null);
+  const { instance } = useMsal();
   const { login, error } = useMsalAuthentication(
     InteractionType.Silent,
     loginRequest
@@ -32,19 +33,25 @@ function App() {
     });
   };
 
-  instance.addEventCallback((event) => {
-    if (event.eventType === EventType.LOGIN_SUCCESS && event.payload) {
-      const authenticationResult = event.payload as { account: AccountInfo };
-      const account = authenticationResult.account;
-      instance.setActiveAccount(account);
-    }
-    if (event.eventType === EventType.ACQUIRE_TOKEN_SUCCESS) {
-      getTokens().then((result) => {
-        setIdToken(result.idToken);
-        setAccessToken(result.accessToken);
-      });
-    }
-  });
+  useEffect(() => {
+    const callbackId = instance.addEventCallback((event) => {
+      if (event.eventType === EventType.LOGIN_SUCCESS && event.payload) {
+        const authenticationResult = event.payload as { account: AccountInfo };
+        const account = authenticationResult.account;
+        instance.setActiveAccount(account);
+      }
+      if (
+        event.eventType === EventType.LOGIN_SUCCESS ||
+        event.eventType === EventType.ACQUIRE_TOKEN_SUCCESS
+      ) {
+        getTokens().then((result) => {
+          setIdToken(result.idToken);
+          setAccessToken(result.accessToken);
+        });
+      }
+    });
+    setEventCallbackId(callbackId);
+  }, []);
 
   const handleLogin = () => {
     setUserContent('');
@@ -52,14 +59,19 @@ function App() {
   };
 
   const handleLogout = () => {
+    if (eventCallbackId) {
+      instance.removeEventCallback(eventCallbackId);
+    }
+
     const logoutRequest = {
-      account: instance.getAccountByHomeId(accounts[0]?.homeAccountId)
+      account: instance.getActiveAccount(),
+      id_token_hint: idToken
     };
     instance.logoutRedirect(logoutRequest);
   };
 
   const getUserContent = async () => {
-    const accessToken = (await getTokens()).accessToken;
+    const accessToken = (await getTokens()).idToken;
     const response = await fetch(`${API_URI}/user-only-content`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -70,7 +82,7 @@ function App() {
   };
 
   const getUserRoles = async () => {
-    const accessToken = (await getTokens()).accessToken;
+    const accessToken = (await getTokens()).idToken;
     const response = await fetch(`${API_URI}/roles`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -93,8 +105,8 @@ function App() {
             <p>Error occurred: {error.errorMessage}</p>
           ) : (
             <>
-              <p>Signed in as: {accounts[0]?.username}</p>
-              <p>Account ID: {accounts[0]?.localAccountId}</p>
+              <p>Signed in as: {instance.getActiveAccount()?.username}</p>
+              <p>Account ID: {instance.getActiveAccount()?.localAccountId}</p>
               <p>
                 <button onClick={getUserContent}>Get user content</button>
                 {userContent && <pre id="json">{userContent}</pre>}
@@ -106,15 +118,32 @@ function App() {
                 )}
               </p>
               <button onClick={handleLogout}>Logout</button>
-              <p>ID Token: {idToken}</p>
-              <p>Access Token: {accessToken}</p>
 
               <p>Token Claims: </p>
               <pre
                 id="json"
                 style={{ whiteSpace: 'pre-line', wordWrap: 'break-word' }}
               >
-                {JSON.stringify(accounts[0]?.idTokenClaims, null, 4)}
+                {JSON.stringify(
+                  instance.getActiveAccount()?.idTokenClaims,
+                  null,
+                  4
+                )}
+              </pre>
+
+              <p>ID Token:</p>
+              <pre
+                id="json"
+                style={{ whiteSpace: 'pre-line', wordWrap: 'break-word' }}
+              >
+                {idToken}
+              </pre>
+              <p>Access Token:</p>
+              <pre
+                id="json"
+                style={{ whiteSpace: 'pre-line', wordWrap: 'break-word' }}
+              >
+                {accessToken}
               </pre>
             </>
           )}

@@ -4,7 +4,8 @@
   "description": "",
   "main": "server.ts",
   "scripts": {
-    "dev": "tsx watch server.ts"
+    "dev": "tsx watch server.ts",
+    "e2e": "cross-env NODE_ENV=e2e tsx watch server.ts"
   },
   "keywords": [],
   "author": "",
@@ -24,6 +25,7 @@
     "@types/jsonwebtoken": "^9.0.6",
     "@types/node": "^20.11.10",
     "@types/react": "^18.2.43",
+    "cross-env": "^7.0.3",
     "ts-node": "^10.9.2",
     "tsx": "^4.17.0",
     "typescript": "^5.2.2"

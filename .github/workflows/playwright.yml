@@ -1,0 +1,38 @@
+name: Playwright Tests
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+jobs:
+  test:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: lts/*
+    - name: Start containers
+      run: docker compose up -d
+    - name: Setup .env files
+      run: echo "${{ vars.FRONTEND_DOTENV }}" > ./frontend/.env && echo "${{ vars.BACKEND_DOTENV }}" > ./backend/.env && echo "${{ vars.E2E_DOTENV }}" > ./e2e/.env
+    - name: Install dependencies
+      run: npm install -g pnpm && pnpm install --prefix e2e
+    - name: Install Playwright Browsers
+      run: pnpm --prefix e2e run setup-browsers
+    - name: Install and run frontend app
+      run: pnpm install --prefix frontend && pnpm --prefix frontend run e2e &
+    - name: Install and run backend app
+      run: pnpm install --prefix backend && pnpm --prefix backend run e2e &
+    - name: Run Playwright tests
+      run: pnpm --prefix e2e run test
+    - name: Stop containers
+      if: always()
+      run: docker compose down
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: playwright-report
+        path: e2e/playwright-report/
+        retention-days: 30

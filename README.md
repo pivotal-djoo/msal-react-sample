@@ -4,13 +4,17 @@ This sample provides a minimal setup to get Authentication working using [MSAL.j
 
 ## Getting Started
 
+> This project uses pnpm. Install via `npm install pnpm -g`
+
 1. Create a `.env` file in `frontend` folder with the following content.
 
 ```bash
 VITE_CLIENT_ID="replace-with-Client-ID-from-Entra-ID"
 VITE_TENANT_ID="replace-with-Azure-Tenant-ID"
-VITE_REDIRECT_URI="http://localhost:5173"
 VITE_SCOPE="replace-with-scope-to-access-the-app"
+VITE_E2E_CLIENT_ID="test-client-id"
+VITE_E2E_AUTHORITY="https://localhost:8443/realms/test"
+VITE_REDIRECT_URI="http://localhost:5173"
 VITE_API_URI="http://localhost:3000"
 ```
 
@@ -19,6 +23,8 @@ VITE_API_URI="http://localhost:3000"
 ```bash
 CLIENT_ID="replace-with-Client-ID-from-Entra-ID"
 TENANT_ID="replace-with-Azure-Tenant-ID"
+E2E_CLIENT_ID="test-client-id"
+E2E_AUTHORITY="https://localhost:8443/realms/test"
 ```
 
 3. Install frontend dependencies
@@ -45,6 +51,64 @@ pnpm install
 
 ```bash
 pnpm run dev
+```
+
+7. View the app in a browser: http://localhost:5173
+
+## Run E2E tests locally
+
+1. Create a `.env` file in `e2e` folder with the following content.
+
+```bash
+WEB_URL="http://localhost:5173"
+USERNAME="test@example.com"
+PASSWORD="password"
+```
+
+2. Start up Keycloak from provided [docker-compose.yaml](./docker-compose.yaml)
+
+```bash
+docker compose up -d
+```
+
+> Keycloak import file [test-realm.json](./keycloak/test-realm.json) provides a test user matching the above `.env` file content.
+
+3. Start frontend and backend apps in e2e mode
+
+```bash
+cd frontend
+pnpm install
+pnpm run e2e
+
+cd ../backend
+pnpm install
+pnpm run e2e
+```
+
+4. Install e2e tests dependencies
+
+```bash
+cd e2e
+pnpm install
+npx playwright install
+```
+
+5. Run the e2e test suite
+
+```bash
+npx playwright test
+```
+
+or run tests in a single browser in headed mode
+
+```bash
+npx playwright test --headed --project chromium
+```
+
+6. View test report
+
+```bash
+npx playwright show-report
 ```
 
 ## References

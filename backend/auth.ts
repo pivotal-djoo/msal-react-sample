@@ -3,24 +3,27 @@ import jwksClient from 'jwks-rsa';
 import { Algorithm, Jwt } from 'jsonwebtoken';
 import { Request } from 'express';
 
-const getJwksURI = async () => {
-  let url;
+const CLIENT_ID =
+  process.env.NODE_ENV === 'e2e'
+    ? process.env.E2E_CLIENT_ID
+    : process.env.CLIENT_ID;
+const OPENID_CONF_URI =
+  process.env.NODE_ENV === 'e2e'
+    ? `${process.env.E2E_AUTHORITY}/.well-known/openid-configuration`
+    : `https://login.microsoftonline.com/${process.env.TENANT_ID}/v2.0/.well-known/openid-configuration`;
 
+const getJwksURI = async () => {
   try {
-    const result = await fetch(
-      `https://login.microsoftonline.com/${process.env.TENANT_ID}/v2.0/.well-known/openid-configuration`
-    );
-    url = (await result?.json())?.jwks_uri;
-  } catch (error) {
-    console.error('Failed to resolve Jwks URI');
+    const response = await fetch(OPENID_CONF_URI);
+    return (await response?.json()).jwks_uri;
+  } catch (e) {
+    console.error('Failed to resolve Jwks URI', e);
   }
-  return url;
 };
 
 const getSecret = async (req: Request, token: Jwt | undefined) => {
-  const client = jwksClient({
-    jwksUri: await getJwksURI()
-  });
+  const jwksUri = await getJwksURI();
+  const client = jwksClient({ jwksUri });
 
   if (token?.header.kid) {
     try {
@@ -34,7 +37,7 @@ const getSecret = async (req: Request, token: Jwt | undefined) => {
 
 export const expressJwtConfig = {
   algorithms: ['RS256' as Algorithm],
-  audience: process.env.CLIENT_ID,
+  audience: CLIENT_ID,
   credentialsRequired: false,
   secret: getSecret
 };
