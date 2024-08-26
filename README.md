@@ -1,5 +1,7 @@
 # MSAL.js + React Sample
 
+ [![Playwright Tests](https://github.com/pivotal-djoo/msal-react-sample/actions/workflows/playwright.yml/badge.svg)](https://github.com/pivotal-djoo/msal-react-sample/actions/workflows/playwright.yml)
+
 This sample provides a minimal setup to get Authentication working using [MSAL.js](https://github.com/AzureAD/microsoft-authentication-library-for-js#readme) with React and Vite.
 
 For running [E2E tests](./e2e/tests/example.spec.ts) written in Playwright, [Keycloak](https://www.keycloak.org/) is used to provide OIDC compatible authentication.

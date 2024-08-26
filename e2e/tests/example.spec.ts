@@ -11,7 +11,7 @@ test('has title', async ({ page }) => {
 });
 
 test('login and call backend', async ({ page }) => {
-  await page.goto('http://localhost:5173/');
+  await page.goto(WEB_URL);
 
   await page.getByRole('button', { name: /Login/i }).click();
 
