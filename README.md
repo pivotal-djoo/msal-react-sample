@@ -2,6 +2,8 @@
 
 This sample provides a minimal setup to get Authentication working using [MSAL.js](https://github.com/AzureAD/microsoft-authentication-library-for-js#readme) with React and Vite.
 
+For running [E2E tests](./e2e/tests/example.spec.ts) written in Playwright, [Keycloak](https://www.keycloak.org/) is used to provide OIDC compatible authentication.
+
 ## Getting Started
 
 > This project uses pnpm. Install via `npm install pnpm -g`
@@ -110,6 +112,10 @@ npx playwright test --headed --project chromium
 ```bash
 npx playwright show-report
 ```
+
+## Updating Keycloak apps and users
+
+See [How to Update Keycloak Realm JSON file](./keycloak/README.md) section.
 
 ## References
 
